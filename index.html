@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TaskGen Mini App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0f172a;--card:#111827;--muted:#94a3b8;--acc:#22c55e;--acc2:#3b82f6}
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial}
+body{margin:0;background:linear-gradient(180deg,#0b1220,#0f172a);color:#e5e7eb}
+a{color:#60a5fa;text-decoration:none}
+.header{padding:18px 16px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:800;letter-spacing:.5px}
+.badge{background:#1f2937;color:#9ca3af;padding:6px 10px;border-radius:999px;font-size:12px}
+.nav{display:flex;gap:8px;padding:10px 12px;overflow:auto}
+.nav button{flex:1;min-width:90px;padding:10px 8px;border:0;border-radius:14px;background:#1e293b;color:#cbd5e1;font-weight:700}
+.nav button.active{background:var(--acc);color:#052e16}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;margin:12px}
+.row{display:flex;gap:12px}
+.kpi{flex:1;background:#0b1220;border:1px solid #1f2937;border-radius:16px;padding:12px;text-align:center}
+.kpi b{font-size:18px}
+.btn{display:inline-block;padding:12px 14px;border-radius:12px;border:0;font-weight:800}
+.btn-primary{background:var(--acc);color:#052e16}
+.btn-ghost{background:#1f2937;color:#e5e7eb}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.task{padding:12px;border-radius:16px;background:#0b1220;border:1px solid #1f2937}
+.muted{color:var(--muted);font-size:13px}
+.footer{padding:16px;text-align:center;color:#64748b;font-size:12px}
+input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #243041;background:#0b1220;color:#e5e7eb}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">TaskGen</div>
+  <div class="badge" id="userBadge">Loading...</div>
+</div>
+<div class="nav">
+  <button class="active" onclick="show('home')">Home</button>
+  <button onclick="show('club')">Club</button>
+  <button onclick="show('task')">Task</button>
+  <button onclick="show('referral')">Referral</button>
+  <button onclick="show('profile')">Profile</button>
+</div>
+<section id="home">
+  <div class="card">
+    <h3 style="margin:6px 0">Welcome</h3>
+    <p class="muted">Earn by completing simple tasks. Invite friends & earn bonus.</p>
+    <div class="row">
+      <div class="kpi"><div class="muted">Balance</div><b id="balance">--</b></div>
+      <div class="kpi"><div class="muted">Tasks Done</div><b id="done">--</b></div>
+    </div>
+    <div style="margin-top:12px" class="grid">
+      <button class="btn btn-primary" onclick="show('task')">Go to Tasks</button>
+      <button class="btn btn-ghost" onclick="show('referral')">Invite</button>
+    </div>
+  </div>
+  <div class="card">
+    <b>How it works</b>
+    <p class="muted">1) Open a task - 2) Complete - 3) Get reward instantly. Withdraw to Wallet/UPI.</p>
+  </div>
+</section>
+<section id="club" style="display:none">
+  <div class="card">
+    <h3>Club</h3>
+    <p class="muted">Join our official channel & group for bonus tasks.</p>
+    <div class="grid">
+      <a class="btn btn-ghost" id="clubCh" href="#" target="_blank">Channel</a>
+      <a class="btn btn-ghost" id="clubGr" href="#" target="_blank">Group</a>
+    </div>
+    <p class="muted" style="margin-top:10px">Links are set by admin in Bot - Setting - Club Links</p>
+  </div>
+</section>
+<section id="task" style="display:none">
+  <div class="card">
+    <h3>Tasks</h3>
+    <p class="muted">Tap a task to open in bot. Tasks are managed from Admin - Tasks Management.</p>
+    <div id="taskList" class="grid"></div>
+    <button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="openBot('Task')">Open Tasks in Bot</button>
+  </div>
+</section>
+<section id="referral" style="display:none">
+  <div class="card">
+    <h3>Referral</h3>
+    <p class="muted">Share your link. You earn when friend completes first task.</p>
+    <input id="refLink" readonly/>
+    <div class="grid" style="margin-top:10px">
+      <button class="btn btn-primary" onclick="copyRef()">Copy</button>
+      <a class="btn btn-ghost" id="shareBtn" href="#" target="_blank">Share</a>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="kpi"><div class="muted">Invites</div><b id="refCount">--</b></div>
+      <div class="kpi"><div class="muted">Earned</div><b id="refEarn">--</b></div>
+    </div>
+  </div>
+</section>
+<section id="profile" style="display:none">
+  <div class="card">
+    <h3>Profile</h3>
+    <p class="muted">Your account & wallet</p>
+    <div class="row"><div class="kpi"><div class="muted">User ID</div><b id="uid">--</b></div><div class="kpi"><div class="muted">Name</div><b id="uname">--</b></div></div>
+    <div style="margin-top:10px">
+      <label class="muted">Send data to bot</label>
+      <div class="grid" style="margin-top:8px">
+        <button class="btn btn-ghost" onclick="sendData('profile')">Send Profile</button>
+        <button class="btn btn-ghost" onclick="sendData('balance')">Request Balance</button>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="footer">TaskGen - Mini App - Works inside Telegram</div>
+<script>
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if(tg){ tg.ready(); tg.expand(); }
+function show(id){
+  document.querySelectorAll('section').forEach(s=>s.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  const map={home:0,club:1,task:2,referral:3,profile:4};
+  document.querySelectorAll('.nav button')[map[id]].classList.add('active');
+  if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+function openBot(text){ if(tg){ tg.sendData(JSON.stringify({action:'open', menu:text})); } else { alert('Open in Telegram: '+text); } }
+function copyRef(){ const el=document.getElementById('refLink'); el.select(); document.execCommand('copy'); alert('Copied!'); }
+function sendData(type){ if(tg && tg.sendData){ tg.sendData(JSON.stringify({type:type, at:Date.now()})); } else { alert('SendData only works when opened from keyboard button'); } }
+try{
+  const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  if(u){
+    document.getElementById('uname').innerText = (u.first_name||'')+' '+(u.last_name||'');
+    document.getElementById('uid').innerText = u.id;
+    document.getElementById('userBadge').innerText = '@'+(u.username||u.id);
+    const bot = localStorage.getItem('bot_username') || 'TaskGenXBot';
+    const link = 'https://t.me/'+bot+'?start='+u.id;
+    document.getElementById('refLink').value = link;
+    document.getElementById('shareBtn').href = 'https://t.me/share/url?url='+encodeURIComponent(link);
+  }
+}catch(e){}
+ const demo = [{title:'Join Channel', reward:2},{title:'Join Group', reward:2},{title:'Visit Link', reward:1},{title:'Submit Proof', reward:5}];
+ const list=document.getElementById('taskList');
+ demo.forEach(t=>{
+   const d=document.createElement('div'); d.className='task';
+   d.innerHTML='<b>'+t.title+'</b><div class="muted">Reward: Rs.'+t.reward+'</div><button class="btn btn-primary" style="margin-top:8px;width:100%" onclick="openBot(\'Task\')">Open</button>';
+   list.appendChild(d);
+ });
+</script>
+</body>
+</html>
